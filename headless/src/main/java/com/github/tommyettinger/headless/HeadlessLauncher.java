@@ -14,8 +14,8 @@ import java.util.concurrent.Callable;
 		mixinStandardHelpOptions = true)
 public class HeadlessLauncher implements Callable<Integer> {
 
-	@CommandLine.Parameters(description = "The absolute or relative path to one or more tab-separated value (.tsv) files.", defaultValue = "*.tsv")
-	public String input = "*.tsv";
+	@CommandLine.Parameters(description = "The absolute or relative path to one or more tab-separated value (.tsv) files.", defaultValue = "Data.tsv")
+	public String input = "Data.tsv";
 
 	public static void main(String[] args) {
 		int exitCode = new picocli.CommandLine(new HeadlessLauncher()).execute(args);
@@ -27,12 +27,7 @@ public class HeadlessLauncher implements Callable<Integer> {
 		HeadlessApplicationConfiguration configuration = new HeadlessApplicationConfiguration();
 		configuration.updatesPerSecond = -1;
 		try {
-			//// loads a file by its full path, which we get via a command-line arg
-			FileInputStream received = new FileInputStream(input);
-
-			int nameStart = Math.max(input.lastIndexOf('/'), input.lastIndexOf('\\')) + 1;
-			this.input = input.substring(nameStart, input.indexOf('.', nameStart));
-			new HeadlessApplication(new Taboratory(input, configuration){
+			new HeadlessApplication(new Taboratory(input), configuration){
 				{
 					try {
 						mainLoopThread.join();

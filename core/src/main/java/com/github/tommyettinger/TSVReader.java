@@ -1,5 +1,8 @@
 package com.github.tommyettinger;
 
+import com.github.tommyettinger.digital.Hasher;
+import com.github.tommyettinger.digital.TextTools;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,10 +35,10 @@ public class TSVReader {
         if(filename == null)
             name = "Untitled";
         else if((idx = filename.indexOf('.')) >= 0)
-            name = StringKit.safeSubstring(filename, 0, idx);
+            name = TextTools.safeSubstring(filename, 0, idx);
         else
             name = filename;
-        headerLine = StringKit.split(allLines.get(0), "\t");
+        headerLine = TextTools.split(allLines.get(0), "\t");
         contentLines = new String[allLines.size() - 1][];
         for (int i = 0; i < contentLines.length; i++) {
             contentLines[i] = readLine(allLines.get(i+1));
@@ -53,7 +56,7 @@ public class TSVReader {
             }
             else
             {
-                result[j] = StringKit.safeSubstring(temp, idx+1, idx = temp.indexOf('\t', idx+1));
+                result[j] = TextTools.safeSubstring(temp, idx+1, idx = temp.indexOf('\t', idx+1));
             }
         }
         if("".equals(headerLine[headerLine.length - 1]))
@@ -98,10 +101,7 @@ public class TSVReader {
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(headerLine);
-        result = 31 * result + Arrays.deepHashCode(contentLines);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (keyColumn != null ? keyColumn.hashCode() : 0);
-        return result;
+        return Hasher.hashBulk(Hasher.Q, headerLine) ^ Hasher.hashBulk(Hasher.R, contentLines)
+                ^ Hasher.hashBulk(Hasher.S, name) ^ Hasher.hashBulk(Hasher.T, keyColumn);
     }
 }
