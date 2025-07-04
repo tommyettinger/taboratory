@@ -1,0 +1,11 @@
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+eclipse.project.name = appName + '-core'
+
+dependencies {
+	api "com.badlogicgames.gdx:gdx:$gdxVersion"
+	api "com.squareup:javapoet:1.13.0"
+    api "com.github.tommyettinger:jdkgdxds:$jdkgdxdsVersion"
+	testImplementation "junit:junit:4.13.2"
+}
+
+compileJava.options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
