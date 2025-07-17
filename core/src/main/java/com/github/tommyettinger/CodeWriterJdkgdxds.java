@@ -19,10 +19,6 @@ public class CodeWriterJdkgdxds
     public CodeWriterJdkgdxds()
     {
     }
-    public CodeWriterJdkgdxds(String toolsPackage, String toolsClass, String maker)
-    {
-        this();
-    }
 
     private final Modifier[] mods = {Modifier.PUBLIC};
     private final TypeName STR = TypeName.get(String.class);
@@ -115,14 +111,10 @@ public class CodeWriterJdkgdxds
     public JavaFile write(TSVReader reader)
     {
         String packageName = "generated";
-        ClassName tlt;
         TypeSpec.Builder tb = TypeSpec.classBuilder(reader.name).addModifiers(mods);
         tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
-        if(toolsClass == null)
-            tlt = ClassName.get(packageName, "TabLabTools");
-        else
-            tlt = ClassName.get(toolsPackage, toolsClass);
+        ClassName tlt = ClassName.get(toolsPackage, toolsClass);
         String section, field, tmp;
         int fieldCount = reader.headerLine.length;
         TypeName typename, typenameExtra1 = null, typenameExtra2 = null;

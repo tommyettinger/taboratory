@@ -1,12 +1,8 @@
 package com.github.tommyettinger.headless;
 
-import com.badlogic.gdx.backends.headless.HeadlessApplication;
-import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.github.tommyettinger.Taboratory;
 import picocli.CommandLine;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "taboratory", version = "Taboratory 0.0.1-SNAPSHOT",
@@ -24,19 +20,8 @@ public class HeadlessLauncher implements Callable<Integer> {
 
 	@Override
 	public Integer call() {
-		HeadlessApplicationConfiguration configuration = new HeadlessApplicationConfiguration();
-		configuration.updatesPerSecond = -1;
 		try {
-			new HeadlessApplication(new Taboratory(input), configuration){
-				{
-					try {
-						mainLoopThread.join();
-					} catch (InterruptedException e) {
-						System.out.println("Interrupted!");
-					}
-				}
-			};
-
+			Taboratory.run(input);
 		} catch (Exception e) {
 			System.out.println("Parameters are not valid. Run with -h to show help.");
 			return -1;

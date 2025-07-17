@@ -1,28 +1,19 @@
 package com.github.tommyettinger;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.github.tommyettinger.digital.TextTools;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class Taboratory extends ApplicationAdapter {
+public final class Taboratory {
 
-    public String input, trimmed;
-    public Taboratory(String input){
-        this.input = input;
-        int nameStart = Math.max(input.lastIndexOf('/'), input.lastIndexOf('\\')) + 1;
-        trimmed = input.substring(nameStart, input.lastIndexOf('.', nameStart));
-
+    private Taboratory() {
     }
 
-    @Override
-    public void create() {
-        if (input == null)
-            return;
+    public static void run(String input){
+        int nameStart = Math.max(input.lastIndexOf('/'), input.lastIndexOf('\\')) + 1;
+//        String trimmed = input.substring(nameStart, input.lastIndexOf('.', nameStart));
         try {
             TSVReader reader = new TSVReader();
             Path path = Paths.get(input);
