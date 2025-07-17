@@ -21,6 +21,8 @@ public class HeadlessLauncher implements Callable<Integer> {
 	@Override
 	public Integer call() {
 		try {
+			// creates a file in the project root, next to settings.gradle
+			//Files.createFile(Paths.get("Where-am-I.txt"));
 			Taboratory.run(input);
 		} catch (Exception e) {
 			System.out.println("Parameters are not valid. Run with -h to show help.");

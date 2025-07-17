@@ -12,7 +12,7 @@ public final class Taboratory {
     }
 
     public static void run(String input){
-        int nameStart = Math.max(input.lastIndexOf('/'), input.lastIndexOf('\\')) + 1;
+//        int nameStart = Math.max(input.lastIndexOf('/'), input.lastIndexOf('\\')) + 1;
 //        String trimmed = input.substring(nameStart, input.lastIndexOf('.', nameStart));
         try {
             TSVReader reader = new TSVReader();
@@ -21,6 +21,8 @@ public final class Taboratory {
 			CodeWriterJdkgdxds writer = new CodeWriterJdkgdxds();
 			System.out.println(writer.write(reader));
 			writer.writeTo(reader, new File(""));
-        }catch (IOException ignored){}
+        }catch (IOException ioe){
+            throw new RuntimeException("Input or output failed.");
+        }
     }
 }
