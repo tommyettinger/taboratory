@@ -567,7 +567,8 @@ public class CodeWriterJdkgdxds
                     result.append(work);
                 }
             }
-            else if(alternationCode == 2 || (s & 1) == alternationCode) {
+            else if(alternationCode == 2 || (s & 1) == ((alternationCode + 1 >>> 1) & 1)) {
+                // if both are Strings or the current alternation is a String
                 work.setLength(0);
                 work.append('"');
                 for (int i = 0; i < value.length(); i++) {
@@ -599,6 +600,7 @@ public class CodeWriterJdkgdxds
                 }
             }
             else if(alternationCode == 11 || (s & 1) == (alternationCode + 1 >>> 3)) {
+                // both are junctions or the current alternation is a junction
                 if (++s < values.length) {
                     if (result.length() + value.length() + 2 - latestBreak < lineLength)
                         result.append("Junction.parse(\"").append(value).append("\"), ");
