@@ -321,7 +321,7 @@ public class CodeWriterJdkgdxds
                 for (int i = 0; i < reader.contentLines.length; i++) {
                     keyStuff[i] = reader.contentLines[i][mappingKeyIndex];
                 }
-                cbb2.add("new $T(\nnew String[]{$L},\n$L)", mappingTypename, stringLiterals(keyStuff), cbb.build().toString()); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
+                cbb2.add("new $T(\nnew String[]{$L},\n$L)", mappingTypename, stringLiterals(keyStuff), cbb.build()); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
                 tb.addField(FieldSpec.builder(mappingTypename, "MAPPING", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb2.build()).build());
                 MethodSpec.Builder mb = MethodSpec.methodBuilder("get").addModifiers(Modifier.PUBLIC, Modifier.STATIC).returns(myName).addParameter(STR, "item").addCode("return MAPPING.get($N);\n", "item");
                 tb.addMethod(mb.build());
