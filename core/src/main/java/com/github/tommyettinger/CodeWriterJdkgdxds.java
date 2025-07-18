@@ -284,10 +284,12 @@ public class CodeWriterJdkgdxds
                                 else
                                     cbb.add("$T.<$T, $T>$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
 
-                            } else
+                            } else {
                                 cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
-                                        stringLiterals((stringFields[j] ? 1 : 0) + (stringExtras[j] ? 2 : 0) - 1, crossFields[j], crossExtras[j], 80,
+                                        stringLiterals((stringFields[j] ? 1 : 0) + (stringExtras[j] ? 2 : 0)
+                                                        + (junctionFields[j] ? 4 : 0) + (junctionExtras[j] ? 8 : 0) - 1, crossFields[j], crossExtras[j], 80,
                                                 TextTools.split(reader.contentLines[i][j], arraySeparators[j])));
+                            }
                         } else {
                             cbb.add("new $T {$L}", typenameFields[j],
                                     stringLiterals((stringFields[j] ? 2 : -1), crossFields[j], null,
@@ -565,7 +567,7 @@ public class CodeWriterJdkgdxds
                     result.append(work);
                 }
             }
-            else if(alternationCode >= 2 || (s & 1) == alternationCode) {
+            else if(alternationCode == 2 || (s & 1) == alternationCode) {
                 work.setLength(0);
                 work.append('"');
                 for (int i = 0; i < value.length(); i++) {
@@ -596,8 +598,25 @@ public class CodeWriterJdkgdxds
                     result.append(work).append('"');
                 }
             }
-            else
-            {
+            else if(alternationCode == 11 || (s & 1) == (alternationCode + 1 >>> 3)) {
+                if (++s < values.length) {
+                    if (result.length() + value.length() + 2 - latestBreak < lineLength)
+                        result.append("Junction.parse(\"").append(value).append("\"), ");
+                    else if (result.length() + value.length() + 1 - latestBreak < lineLength)
+                    {
+                        result.append("Junction.parse(\"").append(value).append("\"),");
+                        latestBreak = result.length();
+                        result.append('\n');
+                    }
+                    else {
+                        latestBreak = result.length();
+                        result.append("Junction.parse(\"").append(value).append("\"),\n");
+                    }
+                } else {
+                    result.append(value);
+                }
+            }
+            else {
                 if (++s < values.length) {
                     if (result.length() + value.length() + 2 - latestBreak < lineLength)
                         result.append(value).append(", ");
