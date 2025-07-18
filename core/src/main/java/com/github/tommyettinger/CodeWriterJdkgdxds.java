@@ -314,16 +314,15 @@ public class CodeWriterJdkgdxds
             cbb.unindent();
             cbb.add("}");
 
-            tb.addField(FieldSpec.builder(atn, "ENTRIES", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb.build()).build());
+//            tb.addField(FieldSpec.builder(atn, "ENTRIES", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb.build()).build());
             if (mappingKeyIndex >= 0) {
-                cbb = CodeBlock.builder();
-                String[] mapStuff = new String[reader.contentLines.length * 2];
+                CodeBlock.Builder cbb2 = CodeBlock.builder();
+                String[] keyStuff = new String[reader.contentLines.length];
                 for (int i = 0; i < reader.contentLines.length; i++) {
-                    mapStuff[i * 2] = reader.contentLines[i][mappingKeyIndex];
-                    mapStuff[i * 2 + 1] = "ENTRIES[" + i + "]";
+                    keyStuff[i] = reader.contentLines[i][mappingKeyIndex];
                 }
-                cbb.add("$T.$L(\n$L)", tlt, makeMethod, stringLiterals(0, VOI, VOI, 80, mapStuff)); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
-                tb.addField(FieldSpec.builder(mappingTypename, "MAPPING", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb.build()).build());
+                cbb2.add("new $T(\nnew String[]{$L},\n$L)", mappingTypename, stringLiterals(keyStuff), cbb.build().toString()); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
+                tb.addField(FieldSpec.builder(mappingTypename, "MAPPING", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb2.build()).build());
                 MethodSpec.Builder mb = MethodSpec.methodBuilder("get").addModifiers(Modifier.PUBLIC, Modifier.STATIC).returns(myName).addParameter(STR, "item").addCode("return MAPPING.get($N);\n", "item");
                 tb.addMethod(mb.build());
             }
