@@ -21,12 +21,11 @@ public class TSVReader {
     }
     public void read(String filename, String text)
     {
-        read(filename, Arrays.asList(text.split("\\v+")));
+        read(filename, Arrays.asList(text.split("\r\n|[\n-\r\u0085\u2028\u2029]")));
+//        read(filename, Arrays.asList(text.split("\\v+")));
    }
     public void read(String filename, List<String> allLines)
     {
-        //allLines = text.split("\r\n|[\n-\r\u0085\u2028\u2029]");
-
         String line;
         if((line = allLines.get(allLines.size() - 1)) == null || line.isEmpty())
             allLines.remove(allLines.size() - 1);
@@ -68,15 +67,15 @@ public class TSVReader {
         return result;
     }
 
-    public void readFile(String filename)
-    {
-        try {
-            Path path = Paths.get(filename);
-            read(path.getFileName().toString(), Files.readAllLines(path));
-        } catch (IOException e) {
-            System.err.println("Could not read file (check that path is correct): " + filename);
-        }
-    }
+//    public void readFile(String filename) {
+//        try {
+//            Path path = Paths.get(filename);
+//            read(path.getFileName().toString(), Files.readAllLines(path));
+//        } catch (IOException e) {
+//            System.err.println("Could not read file (check that path is correct): " + filename);
+//        }
+//    }
+
     private static boolean stringArrayEquals(String[] left, String[] right) {
         if (left == right) return true;
         if (left == null || right == null) return false;

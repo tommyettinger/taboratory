@@ -117,6 +117,8 @@ public class CodeWriterJdkgdxds
         ClassName tlt = ClassName.get(toolsPackage, toolsClass);
         String section, field, tmp;
         int fieldCount = reader.headerLine.length;
+        // The plan is to compare the header code against the hash64 of the headerLine at runtime, as a verification.
+        long headerCode = Hasher.charSequenceArrayHashBulk64.hash64(Hasher.C, reader.headerLine);
         TypeName typename, typenameExtra1 = null, typenameExtra2 = null;
         TypeName[] typenameFields = new TypeName[fieldCount];
         TypeName[] typenameExtras1 = new TypeName[fieldCount];
