@@ -114,11 +114,11 @@ public class CodeWriterJdkgdxds
         TypeSpec.Builder tb = TypeSpec.classBuilder(reader.name).addModifiers(mods);
         tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
-        ClassName tlt = ClassName.get(toolsPackage, toolsClass);
+//        ClassName tlt = ClassName.get(toolsPackage, toolsClass);
         String section, field, tmp;
         int fieldCount = reader.headerLine.length;
-        // The plan is to compare the header code against the hash64 of the headerLine at runtime, as a verification.
-        long headerCode = Hasher.charSequenceArrayHashBulk64.hash64(Hasher.C, reader.headerLine);
+//        // The plan is to compare the header String[] against the given headerLine at runtime, as a verification.
+//        long headerCode = Hasher.charSequenceArrayHashBulk64.hash64(Hasher.C, reader.headerLine);
         TypeName typename, typenameExtra1 = null, typenameExtra2 = null;
         TypeName[] typenameFields = new TypeName[fieldCount];
         TypeName[] typenameExtras1 = new TypeName[fieldCount];
@@ -135,6 +135,7 @@ public class CodeWriterJdkgdxds
         ParameterizedTypeName mappingTypename = null;
         int mappingKeyIndex = -1;
         ClassName myName = ClassName.get(packageName, reader.name);
+        String keyColumn = null;
         for (int i = 0; i < fieldCount; i++) {
             section = reader.headerLine[i];
             if("".equals(section))
@@ -153,8 +154,9 @@ public class CodeWriterJdkgdxds
                     reader.headerLine[i] = section = TextTools.safeSubstring(section, 0, caret);
                     crossFields[i] = typenames.containsKey(tmp = section.substring(colon + 1)) ? VOI : ClassName.get(packageName, tmp);
                     typename = colon < 0 ? STR : typenames.getOrDefault(tmp, crossFields[i]);
-                    if(stringFields[i] = typename.equals(STR))
-                        reader.keyColumn = colon < 0 ? section : section.substring(0, colon);
+                    stringFields[i] = typename.equals(STR);
+                    if(stringFields[i])
+                        keyColumn = colon < 0 ? section : section.substring(0, colon);
                     junctionFields[i] = typename.equals(JUNC);
 
                 } else {
@@ -163,14 +165,14 @@ public class CodeWriterJdkgdxds
                         crossFields[i] = VOI;
                         typename = STR;
                         stringFields[i] = true;
-                        if(reader.keyColumn == null)
-                            reader.keyColumn = section;
+                        if(keyColumn == null)
+                            keyColumn = section;
                     }
                     else {
                         crossFields[i] = typenames.containsKey(tmp = section.substring(colon + 1)) ? VOI : ClassName.get(packageName, tmp);
                         typename = typenames.getOrDefault(tmp, crossFields[i]);
                         if(stringFields[i] = typename.equals(STR))
-                            reader.keyColumn = section.substring(0, colon);
+                            keyColumn = section.substring(0, colon);
                         junctionFields[i] = typename.equals(JUNC);
                     }
                 }
@@ -231,7 +233,7 @@ public class CodeWriterJdkgdxds
             field = TextTools.safeSubstring(section, 0, colon);
             tb.addField(typename, field, mods);
             fieldNames[i] = field;
-            if(field.equals(reader.keyColumn) && typename.equals(STR) && mappingKeyIndex < 0) {
+            if(field.equals(keyColumn) && typename.equals(STR) && mappingKeyIndex < 0) {
                 if (typeLen < 0) {
                     mappingTypename = ParameterizedTypeName.get(mapClass, STR, myName);
                     mappingKeyIndex = i;
