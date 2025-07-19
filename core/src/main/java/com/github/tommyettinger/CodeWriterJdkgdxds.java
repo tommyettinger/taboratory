@@ -7,7 +7,10 @@ import com.squareup.javapoet.*;
 import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class CodeWriterJdkgdxds
@@ -16,8 +19,49 @@ public class CodeWriterJdkgdxds
     public String toolsClass = "ObjectObjectOrderedMap";
     public String makeMethod = "with";
     public ClassName mapClass = ClassName.get(toolsPackage, toolsClass);
-    public CodeWriterJdkgdxds()
-    {
+
+    public String[] headerLine;
+    public String[][] contentLines;
+    public String name;
+
+    public CodeWriterJdkgdxds(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        String filename = path.getFileName().toString();
+        List<String> allLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+        String line;
+        if((line = allLines.get(allLines.size() - 1)) == null || line.isEmpty())
+            allLines.remove(allLines.size() - 1);
+        int idx;
+        if(filename == null)
+            name = "Untitled";
+        else if((idx = filename.indexOf('.')) >= 0)
+            name = TextTools.safeSubstring(filename, 0, idx);
+        else
+            name = filename;
+        headerLine = TextTools.split(allLines.get(0), "\t");
+        contentLines = new String[allLines.size() - 1][];
+        for (int i = 0; i < contentLines.length; i++) {
+            contentLines[i] = readLine(allLines.get(i+1), headerLine);
+        }
+    }
+    public static String[] readLine(String dataLine, String[] headerLine) {
+        if(dataLine == null || headerLine == null || headerLine.length == 0) return new String[0];
+        int idx = -1;
+        String[] result = new String[headerLine.length];
+        for (int j = 0; j < headerLine.length - 1; j++) {
+            if ("".equals(headerLine[j])) {
+                result[j] = "";
+                idx = dataLine.indexOf('\t', idx + 1);
+            } else {
+                result[j] = TextTools.safeSubstring(dataLine, idx + 1, idx = dataLine.indexOf('\t', idx + 1));
+            }
+        }
+        if ("".equals(headerLine[headerLine.length - 1])) {
+            result[headerLine.length - 1] = "";
+        } else {
+            result[headerLine.length - 1] = dataLine.substring(idx + 1);
+        }
+        return result;
     }
 
     private final Modifier[] mods = {Modifier.PUBLIC};
@@ -80,24 +124,24 @@ public class CodeWriterJdkgdxds
         maps.put(ParameterizedTypeName.get(mapClass, TypeName.INT.box(), TypeName.INT.box()),
                 (ClassName.get(toolsPackage, "IntIntOrderedMap")));
     }
-    public String writeToString(TSVReader reader)
+    public String writeToString()
     {
-        return write(reader).toString();
+        return write().toString();
     }
 
-    public void writeTo(TSVReader reader, Appendable appendable)
+    public void writeTo(Appendable appendable)
     {
         try {
-            write(reader).writeTo(appendable);
+            write().writeTo(appendable);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void writeTo(TSVReader reader, File file) {
+    public void writeTo(File file) {
         try {
             Path p = file.toPath();
-            JavaFile jf = write(reader);
+            JavaFile jf = write();
             jf.writeTo(p);
         } catch (IOException e) {
             e.printStackTrace();
@@ -108,17 +152,17 @@ public class CodeWriterJdkgdxds
         return (tn instanceof ParameterizedTypeName) ? ((ParameterizedTypeName)tn).rawType : tn;
     }
 
-    public JavaFile write(TSVReader reader)
+    public JavaFile write()
     {
         String packageName = "generated";
-        TypeSpec.Builder tb = TypeSpec.classBuilder(reader.name).addModifiers(mods);
+        TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods);
         tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
 //        ClassName tlt = ClassName.get(toolsPackage, toolsClass);
         String section, field, tmp;
-        int fieldCount = reader.headerLine.length;
+        int fieldCount = headerLine.length;
 //        // The plan is to compare the header String[] against the given headerLine at runtime, as a verification.
-//        long headerCode = Hasher.charSequenceArrayHashBulk64.hash64(Hasher.C, reader.headerLine);
+//        long headerCode = Hasher.charSequenceArrayHashBulk64.hash64(Hasher.C, headerLine);
         TypeName typename, typenameExtra1 = null, typenameExtra2 = null;
         TypeName[] typenameFields = new TypeName[fieldCount];
         TypeName[] typenameExtras1 = new TypeName[fieldCount];
@@ -134,10 +178,10 @@ public class CodeWriterJdkgdxds
         String[] fieldNames = new String[fieldCount];
         ParameterizedTypeName mappingTypename = null;
         int mappingKeyIndex = -1;
-        ClassName myName = ClassName.get(packageName, reader.name);
+        ClassName myName = ClassName.get(packageName, name);
         String keyColumn = null;
         for (int i = 0; i < fieldCount; i++) {
-            section = reader.headerLine[i];
+            section = headerLine[i];
             if("".equals(section))
             {
                 crossFields[i] = VOI;
@@ -151,7 +195,7 @@ public class CodeWriterJdkgdxds
                     typeLen = Math.max(arrayStart, mapStart);
             if(typeLen < 0) {
                 if (caret >= 0) {
-                    reader.headerLine[i] = section = TextTools.safeSubstring(section, 0, caret);
+                    headerLine[i] = section = TextTools.safeSubstring(section, 0, caret);
                     crossFields[i] = typenames.containsKey(tmp = section.substring(colon + 1)) ? VOI : ClassName.get(packageName, tmp);
                     typename = colon < 0 ? STR : typenames.getOrDefault(tmp, crossFields[i]);
                     stringFields[i] = typename.equals(STR);
@@ -244,22 +288,22 @@ public class CodeWriterJdkgdxds
         tb.addField(TypeName.LONG, "__code", Modifier.PRIVATE);
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
         tb.addMethod(make.build());
-        ClassName cn = ClassName.get(packageName, reader.name);
+        ClassName cn = ClassName.get(packageName, name);
         makeHashCode(tb);
 //        makeHashCode(tb, fieldNames, typenameFields);
         makeEquals(tb, cn, fieldNames, typenameFields);
-        if(reader.contentLines.length > 0) {
+        if(contentLines.length > 0) {
             ArrayTypeName atn = ArrayTypeName.of(cn);
             CodeBlock.Builder cbb = CodeBlock.builder();
             cbb.beginControlFlow("new $T", atn);
-            for (int i = 0; i < reader.contentLines.length; i++) {
+            for (int i = 0; i < contentLines.length; i++) {
                 cbb.add("new $T(", cn);
                 int j = 0;
                 for (; j < fieldCount; j++) {
                     if(VOI.equals(typenameFields[j]))
                         continue;
                     if (extraSeparators[j] != null) { // a map with array values
-                        if (!reader.contentLines[i][j].contains(arraySeparators[j]))
+                        if (!contentLines[i][j].contains(arraySeparators[j]))
                         {
                             if(typenameExtras1[j].isBoxedPrimitive() && typenameExtras2[j].isBoxedPrimitive())
                                 cbb.add("$T.$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
@@ -273,10 +317,10 @@ public class CodeWriterJdkgdxds
                         else
                             cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
                                     stringMapArrayLiterals((stringFields[j] ? 0 : -1), crossFields[j], crossExtras[j], 80,
-                                            reader.contentLines[i][j], arraySeparators[j], extraSeparators[j], typenameExtras2[j]));
+                                            contentLines[i][j], arraySeparators[j], extraSeparators[j], typenameExtras2[j]));
                     } else if (arraySeparators[j] != null) {
                         if (typenameExtras1[j] != null) {
-                            if (!reader.contentLines[i][j].contains(arraySeparators[j])) {
+                            if (!contentLines[i][j].contains(arraySeparators[j])) {
                                 if(typenameExtras1[j].isBoxedPrimitive() && typenameExtras2[j].isBoxedPrimitive())
                                     cbb.add("$T.$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
                                 else if(typenameExtras1[j].isBoxedPrimitive())
@@ -290,27 +334,27 @@ public class CodeWriterJdkgdxds
                                 cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
                                         stringLiterals((stringFields[j] ? 1 : 0) + (stringExtras[j] ? 2 : 0)
                                                         + (junctionFields[j] ? 4 : 0) + (junctionExtras[j] ? 8 : 0) - 1, crossFields[j], crossExtras[j], 80,
-                                                TextTools.split(reader.contentLines[i][j], arraySeparators[j])));
+                                                TextTools.split(contentLines[i][j], arraySeparators[j])));
                             }
                         } else {
                             cbb.add("new $T {$L}", typenameFields[j],
                                     stringLiterals((stringFields[j] ? 2 : -1), crossFields[j], null,
-                                            80, TextTools.split(reader.contentLines[i][j], arraySeparators[j])));
+                                            80, TextTools.split(contentLines[i][j], arraySeparators[j])));
                         }
                     } else if (junctionFields[j] || junctionExtras[j]) {
-                        cbb.add("$T.parse($L)", JUNC.rawType, stringLiteral(reader.contentLines[i][j], crossFields[j]));
+                        cbb.add("$T.parse($L)", JUNC.rawType, stringLiteral(contentLines[i][j], crossFields[j]));
                     } else if (stringFields[j] || stringExtras[j] || !VOI.equals(crossFields[j])) {
-                        cbb.add("$L", stringLiteral(reader.contentLines[i][j], crossFields[j]));
+                        cbb.add("$L", stringLiteral(contentLines[i][j], crossFields[j]));
                     } else {
-                        cbb.add("$L", reader.contentLines[i][j].isEmpty()
+                        cbb.add("$L", contentLines[i][j].isEmpty()
                                 ? Objects.toString(defaults.get(typenameFields[j]))
-                                : bareLiteral(reader.contentLines[i][j], typenameFields[j]));
+                                : bareLiteral(contentLines[i][j], typenameFields[j]));
                     }
 //                    if (j < fieldCount - 1)
                     cbb.add(", ");
                 }
 
-                cbb.add("$LL", Hasher.hashBulk64(Hasher.hashBulk64(Hasher.C, reader.name), reader.contentLines[i]));
+                cbb.add("$LL", Hasher.hashBulk64(Hasher.hashBulk64(Hasher.C, name), contentLines[i]));
                 
                 cbb.add("),\n");
                 
@@ -321,9 +365,9 @@ public class CodeWriterJdkgdxds
 //            tb.addField(FieldSpec.builder(atn, "ENTRIES", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb.build()).build());
             if (mappingKeyIndex >= 0) {
                 CodeBlock.Builder cbb2 = CodeBlock.builder();
-                String[] keyStuff = new String[reader.contentLines.length];
-                for (int i = 0; i < reader.contentLines.length; i++) {
-                    keyStuff[i] = reader.contentLines[i][mappingKeyIndex];
+                String[] keyStuff = new String[contentLines.length];
+                for (int i = 0; i < contentLines.length; i++) {
+                    keyStuff[i] = contentLines[i][mappingKeyIndex];
                 }
                 cbb2.add("new $T(\nnew String[]{$L},\n$L)", mappingTypename, stringLiterals(keyStuff), cbb.build()); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
                 tb.addField(FieldSpec.builder(mappingTypename, "MAPPING", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb2.build()).build());
