@@ -2,6 +2,7 @@ package com.github.tommyettinger;
 
 import com.github.tommyettinger.digital.Hasher;
 import com.github.tommyettinger.digital.TextTools;
+import com.github.tommyettinger.ds.ObjectList;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -13,36 +14,35 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class CodeWriterJdkgdxds
+public class CodeWriter
 {
     public String toolsPackage = "com.github.tommyettinger.ds";
     public String toolsClass = "ObjectObjectOrderedMap";
     public String makeMethod = "with";
     public ClassName mapClass = ClassName.get(toolsPackage, toolsClass);
 
-    public String[] headerLine;
-    public String[][] contentLines;
+    public String[] headerLine = null;
+//    public String[][] contentLines;
     public String name;
 
-    public CodeWriterJdkgdxds(String filePath) throws IOException {
+    public CodeWriter(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         String filename = path.getFileName().toString();
         List<String> allLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+//        List<String> lines = new ObjectList<>(fileText.split("\r\n|[\n-\r\u0085\u2028\u2029]"));
         String line;
         if((line = allLines.get(allLines.size() - 1)) == null || line.isEmpty())
             allLines.remove(allLines.size() - 1);
-        int idx;
-        if(filename == null)
-            name = "Untitled";
-        else if((idx = filename.indexOf('.')) >= 0)
+        int idx = filename.indexOf('.');
+        if(idx >= 0)
             name = TextTools.safeSubstring(filename, 0, idx);
         else
             name = filename;
         headerLine = TextTools.split(allLines.get(0), "\t");
-        contentLines = new String[allLines.size() - 1][];
-        for (int i = 0; i < contentLines.length; i++) {
-            contentLines[i] = readLine(allLines.get(i+1), headerLine);
-        }
+//        contentLines = new String[allLines.size() - 1][];
+//        for (int i = 0; i < contentLines.length; i++) {
+//            contentLines[i] = readLine(allLines.get(i+1), headerLine);
+//        }
     }
     public static String[] readLine(String dataLine, String[] headerLine) {
         if(dataLine == null || headerLine == null || headerLine.length == 0) return new String[0];
@@ -286,95 +286,96 @@ public class CodeWriterJdkgdxds
             make.addParameter(typename, field).addStatement("this.$N = $N", field, field);
         }
         tb.addField(TypeName.LONG, "__code", Modifier.PRIVATE);
+        tb.addField(ArrayTypeName.of(STR), "__headerLine", Modifier.STATIC, Modifier.PRIVATE, Modifier.FINAL).addStaticBlock(CodeBlock.builder().addStatement("__headerLine = new String[]{$L}", stringLiterals(headerLine)).build());
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
         tb.addMethod(make.build());
         ClassName cn = ClassName.get(packageName, name);
         makeHashCode(tb);
 //        makeHashCode(tb, fieldNames, typenameFields);
         makeEquals(tb, cn, fieldNames, typenameFields);
-        if(contentLines.length > 0) {
-            ArrayTypeName atn = ArrayTypeName.of(cn);
-            CodeBlock.Builder cbb = CodeBlock.builder();
-            cbb.beginControlFlow("new $T", atn);
-            for (int i = 0; i < contentLines.length; i++) {
-                cbb.add("new $T(", cn);
-                int j = 0;
-                for (; j < fieldCount; j++) {
-                    if(VOI.equals(typenameFields[j]))
-                        continue;
-                    if (extraSeparators[j] != null) { // a map with array values
-                        if (!contentLines[i][j].contains(arraySeparators[j]))
-                        {
-                            if(typenameExtras1[j].isBoxedPrimitive() && typenameExtras2[j].isBoxedPrimitive())
-                                cbb.add("$T.$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
-                            else if(typenameExtras1[j].isBoxedPrimitive())
-                                cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras2[j], makeMethod);
-                            else if(typenameExtras2[j].isBoxedPrimitive())
-                                cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras1[j], makeMethod);
-                            else
-                                cbb.add("$T.<$T, $T>$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
-                        }
-                        else
-                            cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
-                                    stringMapArrayLiterals((stringFields[j] ? 0 : -1), crossFields[j], crossExtras[j], 80,
-                                            contentLines[i][j], arraySeparators[j], extraSeparators[j], typenameExtras2[j]));
-                    } else if (arraySeparators[j] != null) {
-                        if (typenameExtras1[j] != null) {
-                            if (!contentLines[i][j].contains(arraySeparators[j])) {
-                                if(typenameExtras1[j].isBoxedPrimitive() && typenameExtras2[j].isBoxedPrimitive())
-                                    cbb.add("$T.$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
-                                else if(typenameExtras1[j].isBoxedPrimitive())
-                                    cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras2[j], makeMethod);
-                                else if(typenameExtras2[j].isBoxedPrimitive())
-                                    cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras1[j], makeMethod);
-                                else
-                                    cbb.add("$T.<$T, $T>$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
-
-                            } else {
-                                cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
-                                        stringLiterals((stringFields[j] ? 1 : 0) + (stringExtras[j] ? 2 : 0)
-                                                        + (junctionFields[j] ? 4 : 0) + (junctionExtras[j] ? 8 : 0) - 1, crossFields[j], crossExtras[j], 80,
-                                                TextTools.split(contentLines[i][j], arraySeparators[j])));
-                            }
-                        } else {
-                            cbb.add("new $T {$L}", typenameFields[j],
-                                    stringLiterals((stringFields[j] ? 2 : -1), crossFields[j], null,
-                                            80, TextTools.split(contentLines[i][j], arraySeparators[j])));
-                        }
-                    } else if (junctionFields[j] || junctionExtras[j]) {
-                        cbb.add("$T.parse($L)", JUNC.rawType, stringLiteral(contentLines[i][j], crossFields[j]));
-                    } else if (stringFields[j] || stringExtras[j] || !VOI.equals(crossFields[j])) {
-                        cbb.add("$L", stringLiteral(contentLines[i][j], crossFields[j]));
-                    } else {
-                        cbb.add("$L", contentLines[i][j].isEmpty()
-                                ? Objects.toString(defaults.get(typenameFields[j]))
-                                : bareLiteral(contentLines[i][j], typenameFields[j]));
-                    }
-//                    if (j < fieldCount - 1)
-                    cbb.add(", ");
-                }
-
-                cbb.add("$LL", Hasher.hashBulk64(Hasher.hashBulk64(Hasher.C, name), contentLines[i]));
-                
-                cbb.add("),\n");
-                
-            }
-            cbb.unindent();
-            cbb.add("}");
-
-//            tb.addField(FieldSpec.builder(atn, "ENTRIES", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb.build()).build());
-            if (mappingKeyIndex >= 0) {
-                CodeBlock.Builder cbb2 = CodeBlock.builder();
-                String[] keyStuff = new String[contentLines.length];
-                for (int i = 0; i < contentLines.length; i++) {
-                    keyStuff[i] = contentLines[i][mappingKeyIndex];
-                }
-                cbb2.add("new $T(\nnew String[]{$L},\n$L)", mappingTypename, stringLiterals(keyStuff), cbb.build()); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
-                tb.addField(FieldSpec.builder(mappingTypename, "MAPPING", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb2.build()).build());
-                MethodSpec.Builder mb = MethodSpec.methodBuilder("get").addModifiers(Modifier.PUBLIC, Modifier.STATIC).returns(myName).addParameter(STR, "item").addCode("return MAPPING.get($N);\n", "item");
-                tb.addMethod(mb.build());
-            }
-        }
+//        if(contentLines.length > 0) {
+//            ArrayTypeName atn = ArrayTypeName.of(cn);
+//            CodeBlock.Builder cbb = CodeBlock.builder();
+//            cbb.beginControlFlow("new $T", atn);
+//            for (int i = 0; i < contentLines.length; i++) {
+//                cbb.add("new $T(", cn);
+//                int j = 0;
+//                for (; j < fieldCount; j++) {
+//                    if(VOI.equals(typenameFields[j]))
+//                        continue;
+//                    if (extraSeparators[j] != null) { // a map with array values
+//                        if (!contentLines[i][j].contains(arraySeparators[j]))
+//                        {
+//                            if(typenameExtras1[j].isBoxedPrimitive() && typenameExtras2[j].isBoxedPrimitive())
+//                                cbb.add("$T.$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
+//                            else if(typenameExtras1[j].isBoxedPrimitive())
+//                                cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras2[j], makeMethod);
+//                            else if(typenameExtras2[j].isBoxedPrimitive())
+//                                cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras1[j], makeMethod);
+//                            else
+//                                cbb.add("$T.<$T, $T>$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
+//                        }
+//                        else
+//                            cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
+//                                    stringMapArrayLiterals((stringFields[j] ? 0 : -1), crossFields[j], crossExtras[j], 80,
+//                                            contentLines[i][j], arraySeparators[j], extraSeparators[j], typenameExtras2[j]));
+//                    } else if (arraySeparators[j] != null) {
+//                        if (typenameExtras1[j] != null) {
+//                            if (!contentLines[i][j].contains(arraySeparators[j])) {
+//                                if(typenameExtras1[j].isBoxedPrimitive() && typenameExtras2[j].isBoxedPrimitive())
+//                                    cbb.add("$T.$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
+//                                else if(typenameExtras1[j].isBoxedPrimitive())
+//                                    cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras2[j], makeMethod);
+//                                else if(typenameExtras2[j].isBoxedPrimitive())
+//                                    cbb.add("$T.<$T>$L()", extract(typenameFields[j]), typenameExtras1[j], makeMethod);
+//                                else
+//                                    cbb.add("$T.<$T, $T>$L()", extract(typenameFields[j]), typenameExtras1[j], typenameExtras2[j], makeMethod);
+//
+//                            } else {
+//                                cbb.add("$T.$L($L)", extract(typenameFields[j]), makeMethod,
+//                                        stringLiterals((stringFields[j] ? 1 : 0) + (stringExtras[j] ? 2 : 0)
+//                                                        + (junctionFields[j] ? 4 : 0) + (junctionExtras[j] ? 8 : 0) - 1, crossFields[j], crossExtras[j], 80,
+//                                                TextTools.split(contentLines[i][j], arraySeparators[j])));
+//                            }
+//                        } else {
+//                            cbb.add("new $T {$L}", typenameFields[j],
+//                                    stringLiterals((stringFields[j] ? 2 : -1), crossFields[j], null,
+//                                            80, TextTools.split(contentLines[i][j], arraySeparators[j])));
+//                        }
+//                    } else if (junctionFields[j] || junctionExtras[j]) {
+//                        cbb.add("$T.parse($L)", JUNC.rawType, stringLiteral(contentLines[i][j], crossFields[j]));
+//                    } else if (stringFields[j] || stringExtras[j] || !VOI.equals(crossFields[j])) {
+//                        cbb.add("$L", stringLiteral(contentLines[i][j], crossFields[j]));
+//                    } else {
+//                        cbb.add("$L", contentLines[i][j].isEmpty()
+//                                ? Objects.toString(defaults.get(typenameFields[j]))
+//                                : bareLiteral(contentLines[i][j], typenameFields[j]));
+//                    }
+////                    if (j < fieldCount - 1)
+//                    cbb.add(", ");
+//                }
+//
+//                cbb.add("$LL", Hasher.hashBulk64(Hasher.hashBulk64(Hasher.C, name), contentLines[i]));
+//
+//                cbb.add("),\n");
+//
+//            }
+//            cbb.unindent();
+//            cbb.add("}");
+//
+////            tb.addField(FieldSpec.builder(atn, "ENTRIES", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb.build()).build());
+//            if (mappingKeyIndex >= 0) {
+//                CodeBlock.Builder cbb2 = CodeBlock.builder();
+//                String[] keyStuff = new String[contentLines.length];
+//                for (int i = 0; i < contentLines.length; i++) {
+//                    keyStuff[i] = contentLines[i][mappingKeyIndex];
+//                }
+//                cbb2.add("new $T(\nnew String[]{$L},\n$L)", mappingTypename, stringLiterals(keyStuff), cbb.build()); // alternationCode: (stringFields[mappingKeyIndex] ? 0 : -1)
+//                tb.addField(FieldSpec.builder(mappingTypename, "MAPPING", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL).initializer(cbb2.build()).build());
+//                MethodSpec.Builder mb = MethodSpec.methodBuilder("get").addModifiers(Modifier.PUBLIC, Modifier.STATIC).returns(myName).addParameter(STR, "item").addCode("return MAPPING.get($N);\n", "item");
+//                tb.addMethod(mb.build());
+//            }
+//        }
         return JavaFile.builder(packageName, tb.build()).skipJavaLangImports(true).build();
     }
 
