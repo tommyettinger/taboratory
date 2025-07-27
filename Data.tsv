@@ -1,4 +1,4 @@
-name:s^	operation:s	value_mul:i	value_add:j{, }i	type:s	listens_for:j	succ_remove:s[, ]	succ_put:s[, ]	removed_by:j	description:s
+name:s^	operation:s	valueMul:i	valueAdd:j{, }i	type:s	listensFor:j	succRemove:s[, ]	succPut:s[, ]	removedBy:j	description:s
 bleed	dot	25	heavy, -15	biological				heal	Deals VALUE biological DOT at the end of every round. Removed by any healing. Against heavy armor, -15 VALUE.
 burn	damage	25	light|heavy, 15, plant, 25	energy					Deals VALUE energy damage. Against any armor, +15 VALUE. Against plant, +25 VALUE
 cleanse	aid	5		biological		venom, curse, wither	heal, medicine		Heals VALUE. Delivers 'medicine'. Removes 'venom', 'curse', 'wither'.
