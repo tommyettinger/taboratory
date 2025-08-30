@@ -405,19 +405,19 @@ public class CodeWriter
 
     private void makeHashCode(TypeSpec.Builder tb)
     {
-        tb.addMethod(MethodSpec.methodBuilder("hash64").addModifiers(Modifier.PUBLIC).returns(TypeName.LONG).addStatement("return __code").build());
+        tb.addMethod(MethodSpec.methodBuilder("longHashCode").addModifiers(Modifier.PUBLIC).returns(TypeName.LONG).addStatement("return __code").build());
         tb.addMethod(MethodSpec.methodBuilder("hashCode").addModifiers(mods).returns(TypeName.INT).addStatement("return (int)__code").build());
     }
     private void makeEquals(TypeSpec.Builder tb, ClassName cn, String[] fieldNames, TypeName[] fieldTypes)
     {
         TypeName tn, arrays = TypeName.get(Arrays.class), objects = TypeName.get(Objects.class);
-        tb.addMethod(MethodSpec.methodBuilder("stringArrayEquals").addModifiers(Modifier.PRIVATE, Modifier.STATIC).returns(TypeName.BOOLEAN).addParameter(ArrayTypeName.of(STR), "left").addParameter(ArrayTypeName.of(STR), "right")
-                .addCode("if (left == right) return true;\n" +
-                        "if (left == null || right == null) return false;\n" +
-                        "final int len = left.length;\n" +
-                        "if(len != right.length) return false;\n" +
-                        "for (int i = 0; i < len; i++) { if(!$T.equals(left[i], right[i])) return false; }\n" +
-                        "return true;\n", objects).build());
+//        tb.addMethod(MethodSpec.methodBuilder("stringArrayEquals").addModifiers(Modifier.PRIVATE, Modifier.STATIC).returns(TypeName.BOOLEAN).addParameter(ArrayTypeName.of(STR), "left").addParameter(ArrayTypeName.of(STR), "right")
+//                .addCode("if (left == right) return true;\n" +
+//                        "if (left == null || right == null) return false;\n" +
+//                        "final int len = left.length;\n" +
+//                        "if(len != right.length) return false;\n" +
+//                        "for (int i = 0; i < len; i++) { if(!$T.equals(left[i], right[i])) return false; }\n" +
+//                        "return true;\n", objects).build());
 
         MethodSpec.Builder mb = MethodSpec.methodBuilder("equals").addModifiers(Modifier.PUBLIC).returns(TypeName.BOOLEAN).addParameter(TypeName.OBJECT, "o");
         mb.addCode("if (this == o) return true;\nif (o == null || getClass() != o.getClass()) return false;\n$T other = ($T) o;\n", cn, cn);
@@ -437,10 +437,10 @@ public class CodeWriter
                 if(tn.isPrimitive()) {
                     mb.addStatement("if(!$T.equals($N, other.$N)) return false", arrays, fn, fn);
                 }
-                else if(tn.equals(STR))
-                {
-                    mb.addStatement("if(!stringArrayEquals($N, other.$N)) return false", fn, fn);
-                }
+//                else if(tn.equals(STR))
+//                {
+//                    mb.addStatement("if(!stringArrayEquals($N, other.$N)) return false", fn, fn);
+//                }
                 else
                 {
                     mb.addStatement("if(!$T.deepEquals($N, other.$N)) return false", arrays, fn, fn);
