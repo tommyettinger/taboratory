@@ -14,6 +14,7 @@ public final class Taboratory {
         try {
 			CodeWriter writer = new CodeWriter(input);
 			System.out.println(writer.write());
+            // writes to the same directory as the input, in a subfolder "generated" for the package
 			writer.writeTo(new File(""));
         }catch (IOException ioe){
             throw new RuntimeException("Input or output failed.");

@@ -67,9 +67,10 @@ public class Effect {
     int numLines = lines.size();
     ObjectObjectOrderedMap<String, Effect> all = new ObjectObjectOrderedMap<>(numLines);
     for (int i = 1; i < numLines; i++) {
-      String current = lines.get(i);
-      String[] split = TextTools.split(current, "\t");
-      // now we need generate the bigger code to parse each constructor parameter according to header fields...
+        String current = lines.get(i);
+        String[] split = TextTools.split(current, "\t");
+        //now we need generate the bigger code to parse each constructor parameter according to header fields...
+
     }
     return all;
   }

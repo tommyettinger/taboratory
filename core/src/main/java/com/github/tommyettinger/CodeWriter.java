@@ -1,8 +1,6 @@
 package com.github.tommyettinger;
 
-import com.github.tommyettinger.digital.Hasher;
 import com.github.tommyettinger.digital.TextTools;
-import com.github.tommyettinger.ds.ObjectList;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -17,9 +15,10 @@ import java.util.*;
 public class CodeWriter
 {
     public String toolsPackage = "com.github.tommyettinger.ds";
-    public String toolsClass = "ObjectObjectOrderedMap";
-    public String makeMethod = "with";
-    public ClassName mapClass = ClassName.get(toolsPackage, toolsClass);
+    public String mapTypeString = "ObjectObjectOrderedMap";
+    public String listTypeString = "ObjectList";
+    public ClassName mapClass = ClassName.get(toolsPackage, mapTypeString);
+    public ClassName listClass = ClassName.get(toolsPackage, listTypeString);
 
     public String[] headerLine = null;
 //    public String[][] contentLines;
@@ -70,6 +69,7 @@ public class CodeWriter
     private final ClassName VOI = ClassName.get(Void.class);
     public final HashMap<String, TypeName> typenames = new HashMap<>(32);
     public final HashMap<TypeName, TypeName> maps = new HashMap<>(32);
+    public final HashMap<TypeName, TypeName> lists = new HashMap<>(32);
     public final HashMap<TypeName, String> defaults = new HashMap<>(32);
     {
         typenames.put("String", STR);
@@ -123,6 +123,13 @@ public class CodeWriter
                 (ClassName.get(toolsPackage, "IntLongOrderedMap")));
         maps.put(ParameterizedTypeName.get(mapClass, TypeName.INT.box(), TypeName.INT.box()),
                 (ClassName.get(toolsPackage, "IntIntOrderedMap")));
+        lists.put(ParameterizedTypeName.get(listClass, TypeName.INT.box()),
+                (ClassName.get(toolsPackage, "IntList")));
+        lists.put(ParameterizedTypeName.get(listClass, TypeName.LONG.box()),
+                (ClassName.get(toolsPackage, "LongList")));
+        lists.put(ParameterizedTypeName.get(listClass, TypeName.FLOAT.box()),
+                (ClassName.get(toolsPackage, "FloatList")));
+
     }
     public String writeToString()
     {
