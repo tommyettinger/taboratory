@@ -202,17 +202,17 @@ public class CodeWriter
                     typeLen = Math.max(arrayStart, mapStart);
             if(typeLen < 0) {
                 if (caret >= 0) {
-                    headerLine[i] = section = TextTools.safeSubstring(section, 0, caret);
-                    crossFields[i] = typenames.containsKey(tmp = section.substring(colon + 1)) ? VOI : ClassName.get(packageName, tmp);
+                    section = TextTools.safeSubstring(section, 0, caret);
+                    headerLine[i] = section;
+                    tmp = section.substring(colon + 1);
+                    crossFields[i] = typenames.containsKey(tmp) ? VOI : ClassName.get(packageName, tmp);
                     typename = colon < 0 ? STR : typenames.getOrDefault(tmp, crossFields[i]);
                     stringFields[i] = typename.equals(STR);
                     if(stringFields[i])
                         keyColumn = colon < 0 ? section : section.substring(0, colon);
                     junctionFields[i] = typename.equals(JUNC);
-
                 } else {
-                    if (colon < 0)
-                    {
+                    if (colon < 0) {
                         crossFields[i] = VOI;
                         typename = STR;
                         stringFields[i] = true;
@@ -220,9 +220,11 @@ public class CodeWriter
                             keyColumn = section;
                     }
                     else {
-                        crossFields[i] = typenames.containsKey(tmp = section.substring(colon + 1)) ? VOI : ClassName.get(packageName, tmp);
+                        tmp = section.substring(colon + 1);
+                        crossFields[i] = typenames.containsKey(tmp) ? VOI : ClassName.get(packageName, tmp);
                         typename = typenames.getOrDefault(tmp, crossFields[i]);
-                        if(stringFields[i] = typename.equals(STR))
+                        stringFields[i] = typename.equals(STR);
+                        if(keyColumn == null && (stringFields[i]))
                             keyColumn = section.substring(0, colon);
                         junctionFields[i] = typename.equals(JUNC);
                     }
@@ -303,6 +305,8 @@ public class CodeWriter
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
         tb.addMethod(make.build());
         ClassName cn = ClassName.get(packageName, name);
+        tb.addMethod(MethodSpec.methodBuilder("key").addModifiers(Modifier.PUBLIC).returns(STR).addStatement("return $N", keyColumn).build());
+
         makeHashCode(tb);
 //        makeHashCode(tb, fieldNames, typenameFields);
         makeEquals(tb, cn, fieldNames, typenameFields);
