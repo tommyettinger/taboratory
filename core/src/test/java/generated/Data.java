@@ -64,26 +64,23 @@ public class Data {
 
     /**
      * Not actually generated code at the moment!
-     * @param line a single line of tab-separated fields to be parsed by fixed logic generated at class generation
-     * @return a new Data item parsed from line
+     * @param fields an array of String fields to be parsed by fixed logic generated at class generation
      */
-  public static Data parse(String line) {
-      String[] split = TextTools.split(line, "\t");
-      String p0 = split[0];
-      String p1 = split[1];
-      int p2 = Base.BASE10.readInt(split[2]);
-      ObjectIntOrderedMap<Junction<String>> p3 = new ObjectIntOrderedMap<>();
-      p3.putLegible(split[3], ", ", ", ", PartialParser.DEFAULT_JUNCTION_STRING);
-      String p4 = split[4];
-      Junction<String> p5 = Junction.parse(split[5]);
-      ObjectList<String> p6 = new ObjectList<>();
-      p6.addLegible(split[6], ", ", PartialParser.DEFAULT_STRING);
-      ObjectList<String> p7 = new ObjectList<>();
-      p6.addLegible(split[7], ", ", PartialParser.DEFAULT_STRING);
-      Junction<String> p8 = Junction.parse(split[8]);
-      String p9 = split[9];
-      long hash = Hasher.tau.hashBulk64(line);
-      return new Data(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, hash);
+  public Data(String[] fields) {
+      this.name = fields[0];
+      this.operation = fields[1];
+      this.valueMul = Base.BASE10.readInt(fields[2]);
+      this.valueAdd = new ObjectIntOrderedMap<>();
+      this.valueAdd.putLegible(fields[3], ", ", ", ", PartialParser.DEFAULT_JUNCTION_STRING);
+      this.type = fields[4];
+      this.listensFor = Junction.parse(fields[5]);
+      this.succRemove = new ObjectList<>();
+      this.succRemove.addLegible(fields[6], ", ", PartialParser.DEFAULT_STRING);
+      this.succPut = new ObjectList<>();
+      this.succPut.addLegible(fields[7], ", ", PartialParser.DEFAULT_STRING);
+      this.removedBy = Junction.parse(fields[8]);
+      this.description = fields[9];
+      this.__code = Hasher.stringArrayHashBulk64.hash64(Hasher.T, fields);
   }
 
     public static ObjectObjectOrderedMap<String, Data> parseAll(List<String> lines) {
@@ -99,7 +96,7 @@ public class Data {
         ObjectObjectOrderedMap<String, Data> all = new ObjectObjectOrderedMap<>(numLines);
         for (int i = 1; i < numLines; i++) {
             String current = lines.get(i);
-            Data parsed = parse(current);
+            Data parsed = new Data(TextTools.split(current, "\t"));
             all.put(parsed.key(), parsed);
         }
         return all;
