@@ -1,6 +1,8 @@
 package com.github.tommyettinger;
 
+import com.github.tommyettinger.digital.Base;
 import com.github.tommyettinger.digital.TextTools;
+import com.github.tommyettinger.ds.Junction;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -165,6 +167,8 @@ public class CodeWriter
         TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods);
         tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
+        MethodSpec.Builder parse = MethodSpec.constructorBuilder().addModifiers(mods);
+        parse.addParameter(ArrayTypeName.of(STR), "fields");
 //        ClassName tlt = ClassName.get(toolsPackage, toolsClass);
         String section, field, tmp;
         int fieldCount = headerLine.length;
@@ -255,7 +259,7 @@ public class CodeWriter
                 typename = typenames.getOrDefault(tmp, crossFields[i]);
                 stringFields[i] = typename.equals(STR);
                 junctionFields[i] = typename.equals(JUNC);
-                typename = ParameterizedTypeName.get(listClass, typename);
+                typename = ParameterizedTypeName.get(listClass, typename.box());
                 typename = lists.getOrDefault(typename, typename);
                 arraySeparators[i] = section.substring(arrayStart+1, section.indexOf(']'));
             }
@@ -299,11 +303,31 @@ public class CodeWriter
                 }
             }
             make.addParameter(typename, field).addStatement("this.$N = $N", field, field);
+
+            if(STR.equals(typename))
+                parse.addStatement("this.$N = fields[$L]", field, i);
+            else if(JUNC.equals(typename))
+                parse.addStatement("this.$N = $T.parse(fields[$L])", field, JUNC, i);
+            else if(TypeName.INT.equals(typename))
+                parse.addStatement("this.$N = $T.BASE10.readInt(fields[$L])", field, TypeName.get(Base.class), i);
+            else if(TypeName.LONG.equals(typename))
+                parse.addStatement("this.$N = $T.BASE10.readLong(fields[$L])", field, TypeName.get(Base.class), i);
+            else if(TypeName.FLOAT.equals(typename))
+                parse.addStatement("this.$N = $T.BASE10.readFloat(fields[$L])", field, TypeName.get(Base.class), i);
+            else if(TypeName.DOUBLE.equals(typename))
+                parse.addStatement("this.$N = $T.BASE10.readDouble(fields[$L])", field, TypeName.get(Base.class), i);
+            else if(TypeName.BOOLEAN.equals(typename))
+                parse.addStatement("this.$N = fields[$L].length() > 0 && fields[$L].charAt(0) == 't'", field, i, i);
+            else if(TypeName.CHAR.equals(typename))
+                parse.addStatement("this.$N = fields[$L].charAt(0)", field, i);
         }
         tb.addField(TypeName.LONG, "__code", Modifier.PRIVATE);
         tb.addField(ArrayTypeName.of(STR), "__headerLine", Modifier.STATIC, Modifier.PRIVATE, Modifier.FINAL).addStaticBlock(CodeBlock.builder().addStatement("__headerLine = new String[]{$L}", stringLiterals(headerLine)).build());
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
+        parse.addStatement("this.__code = Hasher.stringArrayHashBulk64.hash64(Hasher.T, fields)");
         tb.addMethod(make.build());
+        //TODO: uncomment when parse is ready
+//        tb.addMethod(parse.build());
         ClassName cn = ClassName.get(packageName, name);
         tb.addMethod(MethodSpec.methodBuilder("key").addModifiers(Modifier.PUBLIC).returns(STR).addStatement("return $N", keyColumn).build());
 
