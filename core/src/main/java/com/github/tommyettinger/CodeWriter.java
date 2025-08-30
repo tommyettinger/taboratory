@@ -229,15 +229,20 @@ public class CodeWriter
                 }
             }
             else if(arrayStart >= 0 && mapStart >= 0) { // map case, array values
-                crossFields[i] = typenames.containsKey(tmp = section.substring(colon + 1, mapStart)) ? VOI : ClassName.get(packageName, tmp);
-                typenameExtras1[i] = typenameExtra1 = typenames.getOrDefault(tmp, crossFields[i]).box();
-                crossExtras[i] = typenames.containsKey(tmp = section.substring(mapEnd + 1, arrayStart)) ? VOI : ClassName.get(packageName, tmp);
+                tmp = section.substring(colon + 1, mapStart);
+                crossFields[i] = typenames.containsKey(tmp) ? VOI : ClassName.get(packageName, tmp);
+                typenameExtra1 = typenames.getOrDefault(tmp, crossFields[i]).box();
+                typenameExtras1[i] = typenameExtra1;
+                tmp = section.substring(mapEnd + 1, arrayStart);
+                crossExtras[i] = typenames.containsKey(tmp) ? VOI : ClassName.get(packageName, tmp);
                 typenameExtra2 = typenames.getOrDefault(tmp, crossExtras[i]);
                 stringFields[i] = typenameExtra1.equals(STR);
                 stringExtras[i] = typenameExtra2.equals(STR);
                 junctionFields[i] = typenameExtra1.equals(JUNC);
                 junctionExtras[i] = typenameExtra2.equals(JUNC);
-                typenameExtras2[i] = typenameExtra2 = ArrayTypeName.of(typenameExtra2);
+                typenameExtra2 = ParameterizedTypeName.get(listClass, typenameExtra2.box());
+                typenameExtra2 = lists.getOrDefault(typenameExtra2, typenameExtra2);
+                typenameExtras2[i] = typenameExtra2;
                 typename = ParameterizedTypeName.get(mapClass, typenameExtra1, typenameExtra2);
                 arraySeparators[i] = section.substring(mapStart+1, mapEnd);
                 extraSeparators[i] = section.substring(arrayStart+1, section.indexOf(']'));
@@ -248,7 +253,8 @@ public class CodeWriter
                 typename = typenames.getOrDefault(tmp, crossFields[i]);
                 stringFields[i] = typename.equals(STR);
                 junctionFields[i] = typename.equals(JUNC);
-                typename = ArrayTypeName.of(typename);
+                typename = ParameterizedTypeName.get(listClass, typename);
+                typename = lists.getOrDefault(typename, typename);
                 arraySeparators[i] = section.substring(arrayStart+1, section.indexOf(']'));
             }
             else { // map case
