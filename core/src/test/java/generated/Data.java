@@ -70,14 +70,11 @@ public class Data {
       this.name = fields[0];
       this.operation = fields[1];
       this.valueMul = Base.BASE10.readInt(fields[2]);
-      this.valueAdd = new ObjectIntOrderedMap<>();
-      this.valueAdd.putLegible(fields[3], ", ", ", ", PartialParser.DEFAULT_JUNCTION_STRING);
+      this.valueAdd = ObjectIntOrderedMap.parse(fields[3], ", ", ", ", PartialParser.DEFAULT_JUNCTION_STRING);
       this.type = fields[4];
       this.listensFor = Junction.parse(fields[5]);
-      this.succRemove = new ObjectList<>();
-      this.succRemove.addLegible(fields[6], ", ", PartialParser.DEFAULT_STRING);
-      this.succPut = new ObjectList<>();
-      this.succPut.addLegible(fields[7], ", ", PartialParser.DEFAULT_STRING);
+      this.succRemove = ObjectList.parse(fields[6], ", ", PartialParser.DEFAULT_STRING);
+      this.succPut = ObjectList.parse(fields[7], ", ", PartialParser.DEFAULT_STRING);
       this.removedBy = Junction.parse(fields[8]);
       this.description = fields[9];
       this.__code = Hasher.stringArrayHashBulk64.hash64(Hasher.T, fields);
