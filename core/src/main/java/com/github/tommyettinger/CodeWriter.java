@@ -1,12 +1,7 @@
 package com.github.tommyettinger;
 
 import com.github.tommyettinger.digital.Base;
-import com.github.tommyettinger.digital.Hasher;
 import com.github.tommyettinger.digital.TextTools;
-import com.github.tommyettinger.ds.IntList;
-import com.github.tommyettinger.ds.Junction;
-import com.github.tommyettinger.ds.ObjectObjectOrderedMap;
-import com.github.tommyettinger.ds.support.util.PartialParser;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -142,9 +137,14 @@ public class CodeWriter
                 (ClassName.get(toolsPackage, "CharList")));
         lists.put(ParameterizedTypeName.get(listClass, TypeName.BOOLEAN.box()),
                 (ClassName.get(toolsPackage, "BooleanList")));
-        partials.put(STR, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_STRING$S");
-        partials.put(JUNC, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_JUNCTION_STRING$S*/");
+        partials.put(STR, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_STRING$L");
+        partials.put(JUNC, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_JUNCTION_STRING$L");
         partials.put(ClassName.get(toolsPackage, "IntList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(IntList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "LongList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(LongList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "FloatList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(FloatList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "DoubleList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(DoubleList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "CharList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(CharList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "BooleanList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(BooleanList::new, $S, false))");
     }
     public String writeToString()
     {
@@ -319,7 +319,7 @@ public class CodeWriter
             if(STR.equals(typename))
                 parse.addStatement("this.$N = fields[$L]", field, i);
             else if(JUNC.equals(typename))
-                parse.addStatement("this.$N = $T.parse(fields[$L])", field, JUNC, i);
+                parse.addStatement("this.$N = $T.parse(fields[$L])", field, JUNC.rawType, i);
             else if(TypeName.INT.equals(typename))
                 parse.addStatement("this.$N = $T.BASE10.readInt(fields[$L])", field, TypeName.get(Base.class), i);
             else if(TypeName.LONG.equals(typename))
@@ -343,6 +343,42 @@ public class CodeWriter
                         parse.addStatement("this.$N = $T.parse(fields[$L], $S, $S, " + partials.get(generics.get(0)) +
                                         ", " + partials.get(generics.get(1)) + ")", field, raw, i,
                                 arraySeparators[i], arraySeparators[i], "", extraSeparators[i]);
+                    } else {
+                        parse.addStatement("this.$N = $T.parse(fields[$L], $S, $S, " + partials.get(generics.get(0)) +
+                                        ", " + partials.get(generics.get(1)) + ")", field, raw, i,
+                                arraySeparators[i], arraySeparators[i], "", "");
+                    }
+                } else if(generics.size() == 1) {
+                    // may be either map or list case
+                    if(arrayStart >= 0){
+                        // list case
+                        parse.addStatement("this.$N = $T.parse(fields[$L], $S, " + partials.get(generics.get(0)) +
+                                        ")", field, raw, i,
+                                arraySeparators[i], "");
+                    } else {
+                        // map case with one primitive type
+                        if (extraSeparators[i] != null) {
+                            // map with primitive key and list value
+                            parse.addStatement("this.$N = $T.parse(fields[$L], $S, $S, " +
+                                            partials.get(generics.get(0)) + ")", field, raw, i,
+                                    arraySeparators[i], arraySeparators[i], extraSeparators[i]);
+                        } else {
+                            // map with primitive key and scalar value or object key and primitive value
+                            parse.addStatement("this.$N = $T.parse(fields[$L], $S, $S, " +
+                                            partials.get(generics.get(0)) + ")", field, raw, i,
+                                    arraySeparators[i], arraySeparators[i], "");
+                        }
+                    }
+                } else {
+                    // may be either a primitive-primitive map or primitive list
+                    if(arrayStart >= 0) {
+                        // list case
+                        parse.addStatement("this.$N = $T.parse(fields[$L], $S)", field, raw, i,
+                                arraySeparators[i]);
+                    } else {
+                        // map case
+                        parse.addStatement("this.$N = $T.parse(fields[$L], $S, $S)", field, raw, i,
+                                arraySeparators[i], arraySeparators[i]);
                     }
                 }
             }
@@ -352,8 +388,7 @@ public class CodeWriter
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
         parse.addStatement("this.__code = com.github.tommyettinger.digital.Hasher.stringArrayHashBulk64.hash64(11111111L, fields)");
         tb.addMethod(make.build());
-        //TODO: uncomment when parse is ready
-//        tb.addMethod(parse.build());
+        tb.addMethod(parse.build());
         ClassName cn = ClassName.get(packageName, name);
         tb.addMethod(MethodSpec.methodBuilder("key").addModifiers(Modifier.PUBLIC).returns(STR).addStatement("return $N", keyColumn).build());
 
