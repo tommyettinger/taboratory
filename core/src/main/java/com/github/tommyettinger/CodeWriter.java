@@ -1,7 +1,10 @@
 package com.github.tommyettinger;
 
 import com.github.tommyettinger.digital.Base;
+import com.github.tommyettinger.digital.Hasher;
 import com.github.tommyettinger.digital.TextTools;
+import com.github.tommyettinger.ds.*;
+import com.github.tommyettinger.ds.support.util.PartialParser;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -137,14 +140,14 @@ public class CodeWriter
                 (ClassName.get(toolsPackage, "CharList")));
         lists.put(ParameterizedTypeName.get(listClass, TypeName.BOOLEAN.box()),
                 (ClassName.get(toolsPackage, "BooleanList")));
-        partials.put(STR, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_STRING$L");
-        partials.put(JUNC, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_JUNCTION_STRING$L");
-        partials.put(ClassName.get(toolsPackage, "IntList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(IntList::new, $S, false))");
-        partials.put(ClassName.get(toolsPackage, "LongList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(LongList::new, $S, false))");
-        partials.put(ClassName.get(toolsPackage, "FloatList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(FloatList::new, $S, false))");
-        partials.put(ClassName.get(toolsPackage, "DoubleList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(DoubleList::new, $S, false))");
-        partials.put(ClassName.get(toolsPackage, "CharList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(CharList::new, $S, false))");
-        partials.put(ClassName.get(toolsPackage, "BooleanList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(BooleanList::new, $S, false))");
+        partials.put(STR, "PartialParser.DEFAULT_STRING$L");
+        partials.put(JUNC, "PartialParser.DEFAULT_JUNCTION_STRING$L");
+        partials.put(ClassName.get(toolsPackage, "IntList"), "PartialParser.intCollectionParser(IntList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "LongList"), "PartialParser.intCollectionParser(LongList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "FloatList"), "PartialParser.intCollectionParser(FloatList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "DoubleList"), "PartialParser.intCollectionParser(DoubleList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "CharList"), "PartialParser.intCollectionParser(CharList::new, $S, false))");
+        partials.put(ClassName.get(toolsPackage, "BooleanList"), "PartialParser.intCollectionParser(BooleanList::new, $S, false))");
     }
     public String writeToString()
     {
@@ -386,7 +389,7 @@ public class CodeWriter
         tb.addField(TypeName.LONG, "__code", Modifier.PRIVATE);
         tb.addField(ArrayTypeName.of(STR), "__headerLine", Modifier.STATIC, Modifier.PRIVATE, Modifier.FINAL).addStaticBlock(CodeBlock.builder().addStatement("__headerLine = new String[]{$L}", stringLiterals(headerLine)).build());
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
-        parse.addStatement("this.__code = com.github.tommyettinger.digital.Hasher.stringArrayHashBulk64.hash64(11111111L, fields)");
+        parse.addStatement("this.__code = Hasher.stringArrayHashBulk64.hash64(11111111L, fields)");
         tb.addMethod(make.build());
         tb.addMethod(parse.build());
         ClassName cn = ClassName.get(packageName, name);
@@ -478,7 +481,19 @@ public class CodeWriter
 //                tb.addMethod(mb.build());
 //            }
 //        }
-        return JavaFile.builder(packageName, tb.build()).skipJavaLangImports(true).build();
+        return JavaFile.builder(packageName, tb.build()).skipJavaLangImports(true)
+                .addFileComment("Generated code produced by taboratory.")
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(PartialParser.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(Junction.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(Hasher.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(IntList.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(LongList.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(FloatList.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(DoubleList.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(CharList.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(BooleanList.class))
+                .addFileComment("\n$T (This is here to generate an import statement.)", TypeName.get(ObjectList.class))
+                .build();
     }
 
     private String bareLiteral(String s, TypeName type) {
