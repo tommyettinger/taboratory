@@ -85,10 +85,10 @@ public class Data {
 
         String firstLine = lines.get(0);
         String[] header = TextTools.split(firstLine, "\t");
-        if (!Arrays.deepEquals(__headerLine, header))
+        if (!Arrays.deepEquals(__headerLine, header)) {
             throw new IllegalArgumentException("Header lines do not match! Expected:\n" +
                     TextTools.join("\t", __headerLine) + "\nbut got:\n" + firstLine);
-
+        }
         int numLines = lines.size();
         ObjectObjectOrderedMap<String, Data> all = new ObjectObjectOrderedMap<>(numLines);
         for (int i = 1; i < numLines; i++) {

@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class CodeWriter
+public class Generator
 {
     public String toolsPackage = "com.github.tommyettinger.ds";
     public String mapTypeString = "ObjectObjectOrderedMap";
@@ -28,7 +28,7 @@ public class CodeWriter
 //    public String[][] contentLines;
     public String name;
 
-    public CodeWriter(String filePath) throws IOException {
+    public Generator(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         String filename = path.getFileName().toString();
         List<String> allLines = Files.readAllLines(path, StandardCharsets.UTF_8);
@@ -392,6 +392,25 @@ public class CodeWriter
         parse.addStatement("this.__code = Hasher.stringArrayHashBulk64.hash64(11111111L, fields)");
         tb.addMethod(make.build());
         tb.addMethod(parse.build());
+        MethodSpec parseAll = MethodSpec.methodBuilder("parseAll").addModifiers(Modifier.PUBLIC, Modifier.STATIC).returns(mappingTypename).addParameter(ParameterizedTypeName.get(List.class, String.class), "lines").addCode(
+                "if (lines == null || lines.isEmpty()) return new $1T();\n" +
+                "String firstLine = lines.get(0);\n" +
+                "String[] header = $3T.split(firstLine, \"\\t\");\n" +
+                "if (!$4T.deepEquals(__headerLine, header)) {\n" +
+                "$>throw new IllegalArgumentException(\"Header lines do not match! Expected:\\n\" +\n" +
+                "$>$3T.join(\"\\t\", __headerLine) + \"\\nbut got:\\n\" + firstLine);\n" +
+                "$<$<}\n" +
+                "int numLines = lines.size();\n" +
+                "$1T all = new $1T(numLines);\n" +
+                "for (int i = 1; i < numLines; i++) {\n" +
+                "$>String current = lines.get(i);\n" +
+                "$2T parsed = new $2T($3T.split(current, \"\\t\"));\n" +
+                "all.put(parsed.key(), parsed);\n" +
+                "$<}\n" +
+                "return all;\n",
+                mappingTypename, myName, ClassName.get(TextTools.class), ClassName.get(Arrays.class)).build();
+        tb.addMethod(parseAll);
+
         ClassName cn = ClassName.get(packageName, name);
         tb.addMethod(MethodSpec.methodBuilder("key").addModifiers(Modifier.PUBLIC).returns(STR).addStatement("return $N", keyColumn).build());
 

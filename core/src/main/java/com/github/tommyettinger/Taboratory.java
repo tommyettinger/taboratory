@@ -12,7 +12,7 @@ public final class Taboratory {
 //        int nameStart = Math.max(input.lastIndexOf('/'), input.lastIndexOf('\\')) + 1;
 //        String trimmed = input.substring(nameStart, input.lastIndexOf('.', nameStart));
         try {
-			CodeWriter writer = new CodeWriter(input);
+			Generator writer = new Generator(input);
 			System.out.println(writer.write());
             // writes to the same directory as the input, in a subfolder "generated" for the package
 			writer.writeTo(new File(""));
