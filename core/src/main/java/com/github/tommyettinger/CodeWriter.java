@@ -1,8 +1,12 @@
 package com.github.tommyettinger;
 
 import com.github.tommyettinger.digital.Base;
+import com.github.tommyettinger.digital.Hasher;
 import com.github.tommyettinger.digital.TextTools;
+import com.github.tommyettinger.ds.IntList;
 import com.github.tommyettinger.ds.Junction;
+import com.github.tommyettinger.ds.ObjectObjectOrderedMap;
+import com.github.tommyettinger.ds.support.util.PartialParser;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -73,6 +77,7 @@ public class CodeWriter
     public final HashMap<TypeName, TypeName> maps = new HashMap<>(32);
     public final HashMap<TypeName, TypeName> lists = new HashMap<>(32);
     public final HashMap<TypeName, String> defaults = new HashMap<>(32);
+    public final HashMap<TypeName, String> partials = new HashMap<>(32);
     {
         typenames.put("String", STR);
         typenames.put("str", STR);
@@ -131,7 +136,15 @@ public class CodeWriter
                 (ClassName.get(toolsPackage, "LongList")));
         lists.put(ParameterizedTypeName.get(listClass, TypeName.FLOAT.box()),
                 (ClassName.get(toolsPackage, "FloatList")));
-
+        lists.put(ParameterizedTypeName.get(listClass, TypeName.DOUBLE.box()),
+                (ClassName.get(toolsPackage, "DoubleList")));
+        lists.put(ParameterizedTypeName.get(listClass, TypeName.CHAR.box()),
+                (ClassName.get(toolsPackage, "CharList")));
+        lists.put(ParameterizedTypeName.get(listClass, TypeName.BOOLEAN.box()),
+                (ClassName.get(toolsPackage, "BooleanList")));
+        partials.put(STR, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_STRING$S");
+        partials.put(JUNC, "com.github.tommyettinger.ds.support.util.PartialParser.DEFAULT_JUNCTION_STRING$S*/");
+        partials.put(ClassName.get(toolsPackage, "IntList"), "com.github.tommyettinger.ds.support.util.PartialParser.intCollectionParser(IntList::new, $S, false))");
     }
     public String writeToString()
     {
@@ -286,10 +299,9 @@ public class CodeWriter
                             extras.add(typenameExtra2);
                         typename = ParameterizedTypeName.get(((ParameterizedTypeName)tn).rawType, extras.toArray(new TypeName[0]));
                     } else typename = tn;
-                }
-                else
+                } else {
                     typename = ParameterizedTypeName.get(mapClass, typenameExtra1, typenameExtra2);
-
+                }
                 arraySeparators[i] = section.substring(mapStart+1, mapEnd);
             }
             typenameFields[i] = typename;
@@ -320,11 +332,25 @@ public class CodeWriter
                 parse.addStatement("this.$N = fields[$L].length() > 0 && fields[$L].charAt(0) == 't'", field, i, i);
             else if(TypeName.CHAR.equals(typename))
                 parse.addStatement("this.$N = fields[$L].charAt(0)", field, i);
+            else if(typename instanceof ParameterizedTypeName) {
+                ParameterizedTypeName ptn = (ParameterizedTypeName)typename;
+                List<TypeName> generics = ptn.typeArguments;
+                ClassName raw = ptn.rawType;
+                if(generics.size() == 2) {
+                    // map case
+                    if (extraSeparators[i] != null) {
+                        // map with list values
+                        parse.addStatement("this.$N = $T.parse(fields[$L], $S, $S, " + partials.get(generics.get(0)) +
+                                        ", " + partials.get(generics.get(1)) + ")", field, raw, i,
+                                arraySeparators[i], arraySeparators[i], "", extraSeparators[i]);
+                    }
+                }
+            }
         }
         tb.addField(TypeName.LONG, "__code", Modifier.PRIVATE);
         tb.addField(ArrayTypeName.of(STR), "__headerLine", Modifier.STATIC, Modifier.PRIVATE, Modifier.FINAL).addStaticBlock(CodeBlock.builder().addStatement("__headerLine = new String[]{$L}", stringLiterals(headerLine)).build());
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
-        parse.addStatement("this.__code = Hasher.stringArrayHashBulk64.hash64(Hasher.T, fields)");
+        parse.addStatement("this.__code = com.github.tommyettinger.digital.Hasher.stringArrayHashBulk64.hash64(11111111L, fields)");
         tb.addMethod(make.build());
         //TODO: uncomment when parse is ready
 //        tb.addMethod(parse.build());
