@@ -223,7 +223,6 @@ public class Generator
             if(typeLen < 0) {
                 if (caret >= 0) {
                     section = TextTools.safeSubstring(section, 0, caret);
-                    headerLine[i] = section;
                     tmp = section.substring(colon + 1);
                     crossFields[i] = typenames.containsKey(tmp) ? VOI : ClassName.get(packageName, tmp);
                     typename = colon < 0 ? STR : typenames.getOrDefault(tmp, crossFields[i]);
