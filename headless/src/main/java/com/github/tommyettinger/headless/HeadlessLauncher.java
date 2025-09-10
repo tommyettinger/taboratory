@@ -22,10 +22,10 @@ public class HeadlessLauncher implements Callable<Integer> {
 	public Integer call() {
 		try {
 			// creates a file in the project root, next to settings.gradle
-			//Files.createFile(Paths.get("Where-am-I.txt"));
 			Taboratory.run(input);
 		} catch (Exception e) {
-			System.out.println("Parameters are not valid. Run with -h to show help.");
+			System.out.println("Parameters are not valid, or something failed. Run with -h to show help.\n" +
+                    "Original error message:\n" + e.getLocalizedMessage());
 			return -1;
 		}
 		return 0;
