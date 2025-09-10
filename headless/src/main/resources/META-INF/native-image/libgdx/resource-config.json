@@ -1,7 +1,0 @@
-{
-  "bundles" : [
-  ],
-  "resources" : [
-    {"pattern" : "\\Qgdx64.dll\\E"}
-  ]
-}
