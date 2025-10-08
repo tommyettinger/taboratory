@@ -154,7 +154,7 @@ public class Generator
     {
         String packageName = "generated";
         TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods);
-        tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).build());
+        tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).addStatement("this(__defaults)").build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
         MethodSpec.Builder parse = MethodSpec.constructorBuilder().addModifiers(mods);
         parse.addParameter(ArrayTypeName.of(STR), "fields");
@@ -340,8 +340,15 @@ public class Generator
                 }
             }
         }
-        tb.addField(TypeName.LONG, "__code", Modifier.PRIVATE);
-        tb.addField(ArrayTypeName.of(STR), "__headerLine", Modifier.STATIC, Modifier.PRIVATE, Modifier.FINAL).addStaticBlock(CodeBlock.builder().addStatement("__headerLine = new String[]{$L}", stringLiterals(headerLine)).build());
+        tb.addField(TypeName.LONG, "__code", Modifier.PUBLIC);
+        tb.addField(ArrayTypeName.of(STR), "__headerLine", Modifier.STATIC, Modifier.PUBLIC, Modifier.FINAL);
+        tb.addField(ArrayTypeName.of(STR), "__defaults", Modifier.STATIC, Modifier.PUBLIC, Modifier.FINAL);
+
+        tb.addStaticBlock(CodeBlock.builder()
+                .addStatement("__headerLine = new String[]{$L}", stringLiterals(headerLine))
+                .addStatement("__defaults = new String[__headerLine.length]")
+                .addStatement("$T.fill(__defaults, \"\")", Arrays.class)
+                .build());
         make.addParameter(TypeName.LONG, "__code").addStatement("this.__code = __code");
         parse.addStatement("this.__code = Hasher.stringArrayHashBulk64.hash64(11111111L, fields)");
         tb.addMethod(make.build());
