@@ -9,6 +9,21 @@ For the .exe, you can drag and drop any appropriately-formatted .tsv file onto t
 8 should work), and run from the command line `java -jar taboratory.jar MyTabSeparatedValues.tsv`, replacing with
 whatever your appropriately-formatted .tsv file is named.
 
+The generated class will depend on [jdkgdxds](https://github.com/tommyettinger/jdkgdxds) and
+[JetBrains java-annotations](https://github.com/JetBrains/java-annotations).
+A typical Gradle dependency for the two in an application looks like:
+
+```groovy
+    implementation "com.github.tommyettinger:jdkgdxds:1.12.4"
+    compileOnly "org.jetbrains:annotations:26.0.2-1"
+// optional:
+    testCompileOnly "org.jetbrains:annotations:26.0.2-1"
+```
+
+Applications will want to use `compileOnly` and/or `testCompileOnly` for the `annotations` dependency, since the
+annotations won't be needed to run a JAR or exe distribution. Libraries for internal use might consider using `api` for
+`annotations`, but jdkgdxds doesn't use `api` to avoid requiring code using it to distribute `annotations`.
+
 # Format
 
 The first part of the input file is, as in most TSV files, a header line. It contains the column names and types, with
@@ -98,6 +113,14 @@ looked up in a class in the same package (by default, `generated`), calling `Tal
 first Talent instance and `Talent.get("Martial Arts")` to get the other. If you have your own non-taboratory class that
 you want to use like Talent is used here, you just need it to have a static method `get()` that takes a String and
 returns an appropriate instance of that class.
+
+# Why Tabs?
+
+I didn't want to implement a full CSV parser that could handle complex quoting situations, and GitHub can display a TSV
+file as easily as a CSV file in its web preview (which is nice!). TSV is also the native format produced when copying
+and pasting from a LibreOffice Calc spreadsheet, which is my go-to for spreadsheet editing. Tabs tend to be more
+legible to humans, simply because they're whitespace, which makes them separate sections prominently, where
+using,commas,seems,like,one,big,word. I also like to use friendlier delimiters, like `", "`, between items in a cell.
 
 # Notes
 
