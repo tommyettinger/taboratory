@@ -6,6 +6,7 @@ import com.github.tommyettinger.digital.TextTools;
 import com.github.tommyettinger.ds.*;
 import com.github.tommyettinger.ds.support.util.PartialParser;
 import com.squareup.javapoet.*;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import javax.lang.model.element.Modifier;
 import java.io.File;
@@ -153,7 +154,7 @@ public class Generator
     public JavaFile write()
     {
         String packageName = "generated";
-        TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods);
+        TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods).addAnnotation(NotNullByDefault.class);
         tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).addStatement("this(__defaults)").build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
         MethodSpec.Builder parse = MethodSpec.constructorBuilder().addModifiers(mods);
