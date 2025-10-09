@@ -5,7 +5,7 @@ import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "taboratory", version = "Taboratory 0.0.2",
+@CommandLine.Command(name = "taboratory", version = "Taboratory 0.0.3",
         description = "Takes a .tsv tab-separated value file and writes Java sources inside './generated/' .",
         mixinStandardHelpOptions = true)
 public class HeadlessLauncher implements Callable<Integer> {

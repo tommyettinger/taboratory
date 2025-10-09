@@ -286,7 +286,7 @@ public class Generator
             else if(TypeName.DOUBLE.equals(typename))
                 parse.addStatement("this.$N = $T.BASE10.readDouble(fields[$L])", field, TypeName.get(Base.class), i);
             else if(TypeName.BOOLEAN.equals(typename))
-                parse.addStatement("this.$N = fields[$L].length() > 0 && fields[$L].charAt(0) == 't'", field, i, i);
+                parse.addStatement("this.$N = !fields[$L].isEmpty() && fields[$L].charAt(0) == 't'", field, i, i);
             else if(TypeName.CHAR.equals(typename))
                 parse.addStatement("this.$N = fields[$L].charAt(0)", field, i);
             else if(typename instanceof ParameterizedTypeName) {
