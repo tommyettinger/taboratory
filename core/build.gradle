@@ -3,7 +3,7 @@ eclipse.project.name = appName + '-core'
 
 dependencies {
 	api "com.squareup:javapoet:1.13.0"
-    api "com.github.tommyettinger:jdkgdxds:1.12.4"
+    api "com.github.tommyettinger:jdkgdxds:1.13.0"
     testCompileOnly "org.jetbrains:annotations:26.0.2-1"
 
 	testImplementation "junit:junit:4.13.2"

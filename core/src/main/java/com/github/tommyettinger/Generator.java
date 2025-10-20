@@ -153,7 +153,7 @@ public class Generator
     public JavaFile write()
     {
         String packageName = "generated";
-        TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods).addAnnotation(ClassName.get("org.jetbrains.annotations", "NotNullByDefault"));
+        TypeSpec.Builder tb = TypeSpec.classBuilder(name).addModifiers(mods);
         tb.addMethod(MethodSpec.constructorBuilder().addModifiers(mods).addStatement("this(__defaults)").build());
         MethodSpec.Builder make = MethodSpec.constructorBuilder().addModifiers(mods);
         MethodSpec.Builder parse = MethodSpec.constructorBuilder().addModifiers(mods);
